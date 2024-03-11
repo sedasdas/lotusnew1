@@ -1038,6 +1038,132 @@ var proveCmd = &cli.Command{
 	},
 }
 
+var recCmd = &cli.Command{
+	Name:  "rec",
+	Usage: "Manually run sealing operation on a sector",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "miner-addr",
+			Usage: "specify the miner address",
+			Value: "t01000",
+		},
+		&cli.Int64Flag{
+			Name:  "sector-num",
+			Usage: "specify the sector number to seal",
+			Value: 0,
+		},
+		&cli.StringFlag{
+			Name:  "ticket-preimage",
+			Usage: "specify the ticket preimage for sealing",
+			Value: "",
+		},
+		&cli.StringFlag{
+			Name:  "sealed-cid",
+			Usage: "specify the sealed CID",
+			Value: "",
+		},
+		&cli.StringFlag{
+			Name:  "sector-size",
+			Usage: "specify the sector size",
+			Value: "512MiB",
+		},
+	},
+	Action: func(c *cli.Context) error {
+		// Parse input flags
+		minerAddr, err := address.NewFromString(c.String("miner-addr"))
+		if err != nil {
+			return err
+		}
+		sectorNum := abi.SectorNumber(c.Int64("sector-num"))
+		ticketPreimage := []byte(c.String("ticket-preimage"))
+		sealedCID, err := cid.Decode(c.String("sealed-cid"))
+		if err != nil {
+			return err
+		}
+		sectorSize, err := units.RAMInBytes(c.String("sector-size"))
+		if err != nil {
+			return err
+		}
+
+		// Get miner ID from address
+		minerID, err := address.IDFromAddress(minerAddr)
+		if err != nil {
+			return err
+		}
+
+		// Create a new sealer instance
+		sbfs := &basicfs.Provider{}
+		sb, err := ffiwrapper.New(sbfs)
+		if err != nil {
+			return err
+		}
+
+		// Prepare sector metadata
+		sectorID := abi.SectorID{Miner: abi.ActorID(minerID), Number: sectorNum}
+		sid := storiface.SectorRef{
+			ID:        sectorID,
+			ProofType: spt(abi.SectorSize(sectorSize), false),
+		}
+
+		// Perform sealing operations
+		log.Infof("[%d] Running replication...", sectorNum)
+		trand := blake2b.Sum256(ticketPreimage)
+		ticket := abi.SealRandomness(trand[:])
+		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, nil)
+		if err != nil {
+			return xerrors.Errorf("commit: %w", err)
+		}
+
+		cids, err := sb.SealPreCommit2(context.TODO(), sid, pc1o)
+		if err != nil {
+			return xerrors.Errorf("commit: %w", err)
+		}
+
+		if !sealedCID.Equals(cids.Sealed) {
+			return xerrors.Errorf("sealed CID doesn't match: expected %s, got %s", sealedCID, cids.Sealed)
+		}
+
+		seed := lapi.SealSeed{
+			Epoch: 101,
+			Value: []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 255},
+		}
+
+		log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
+		c1o, err := sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, nil, cids)
+		if err != nil {
+			return err
+		}
+
+		log.Infof("[%d] Generating PoRep for sector (2)", sectorNum)
+		proof, err := sb.SealCommit2(context.TODO(), sid, c1o)
+		if err != nil {
+			return err
+		}
+
+		svi := prooftypes.SealVerifyInfo{
+			SectorID:              sectorID,
+			SealedCID:             cids.Sealed,
+			SealProof:             sid.ProofType,
+			Proof:                 proof,
+			DealIDs:               nil,
+			Randomness:            ticket,
+			InteractiveRandomness: seed.Value,
+			UnsealedCID:           cids.Unsealed,
+		}
+
+		ok, err := ffiwrapper.ProofVerifier.VerifySeal(svi)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return xerrors.Errorf("porep proof for sector %d was invalid", sectorNum)
+		}
+
+		log.Infof("Sealing operation completed successfully for sector %d", sectorNum)
+		return nil
+	},
+}
+
 func bps(sectorSize abi.SectorSize, sectorNum int, d time.Duration) string {
 	bdata := new(big.Int).SetUint64(uint64(sectorSize))
 	bdata = bdata.Mul(bdata, big.NewInt(int64(sectorNum)))
