@@ -122,6 +122,7 @@ func main() {
 			importBenchCmd,
 			cliCmd,
 			rpcCmd,
+			recCmd,
 		},
 	}
 
@@ -1092,7 +1093,9 @@ var recCmd = &cli.Command{
 		}
 
 		// Create a new sealer instance
-		sbfs := &basicfs.Provider{}
+		sbfs := &basicfs.Provider{
+			Root: "/mnt/md0/tps", // 使用提供的扇区封装路径
+		}
 		sb, err := ffiwrapper.New(sbfs)
 		if err != nil {
 			return err
@@ -1106,10 +1109,15 @@ var recCmd = &cli.Command{
 		}
 
 		// Perform sealing operations
+		pi, err := sb.AddPiece(context.TODO(), sid, nil, abi.PaddedPieceSize(sectorSize).Unpadded(), rand.Reader)
+		if err != nil {
+			return xerrors.Errorf("add piece: %w", err)
+		}
+
 		log.Infof("[%d] Running replication...", sectorNum)
 		trand := blake2b.Sum256(ticketPreimage)
 		ticket := abi.SealRandomness(trand[:])
-		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, nil)
+		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, []abi.PieceInfo{pi})
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
