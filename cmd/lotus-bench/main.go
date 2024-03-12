@@ -1268,6 +1268,11 @@ var seaCmd = &cli.Command{
 		}
 
 		log.Infof("[%d] Running replication...", sectorNum)
+
+		if err != nil {
+			return err
+		}
+
 		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, []abi.PieceInfo{pi})
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
@@ -1279,145 +1284,7 @@ var seaCmd = &cli.Command{
 		}
 
 		log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
-		c1o, err := sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, nil, cids)
-		if err != nil {
-			return err
-		}
-
-		log.Infof("[%d] Generating PoRep for sector (2)", sectorNum)
-		proof, err := sb.SealCommit2(context.TODO(), sid, c1o)
-		if err != nil {
-			return err
-		}
-
-		svi := prooftypes.SealVerifyInfo{
-			SectorID:              sectorID,
-			SealedCID:             cids.Sealed,
-			SealProof:             sid.ProofType,
-			Proof:                 proof,
-			DealIDs:               nil,
-			Randomness:            ticket,
-			InteractiveRandomness: seed.Value,
-			UnsealedCID:           cids.Unsealed,
-		}
-
-		ok, err := ffiwrapper.ProofVerifier.VerifySeal(svi)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return xerrors.Errorf("porep proof for sector %d was invalid", sectorNum)
-		}
-
-		log.Infof("Sealed CID: %s", cids.Sealed)
-		log.Infof("Sealing operation completed successfully for sector %d", sectorNum)
-		return nil
-	},
-}
-
-var seaCmd = &cli.Command{
-	Name:  "sea",
-	Usage: "Manually run sealing operation on a sector with fixed inputs",
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:  "miner-addr",
-			Usage: "specify the miner address",
-			Value: "t01000",
-		},
-		&cli.Int64Flag{
-			Name:  "sector-num",
-			Usage: "specify the sector number to seal",
-			Value: 0,
-		},
-		&cli.StringFlag{
-			Name:  "ticket",
-			Usage: "specify the fixed ticket value",
-			Value: "", // 请提供固定的 ticket 值
-		},
-		&cli.StringFlag{
-			Name:  "seed",
-			Usage: "specify the fixed seed value",
-			Value: "", // 请提供固定的 seed 值
-		},
-		&cli.StringFlag{
-			Name:  "sector-size",
-			Usage: "specify the sector size",
-			Value: "512MiB",
-		},
-	},
-	Action: func(c *cli.Context) error {
-		// Parse input flags
-		minerAddr, err := address.NewFromString(c.String("miner-addr"))
-		if err != nil {
-			return err
-		}
-		sectorNum := abi.SectorNumber(c.Int64("sector-num"))
-		ticketBytes, err := hex.DecodeString(c.String("ticket"))
-		if err != nil {
-			return err
-		}
-		ticket := abi.SealRandomness(ticketBytes)
-		seedBytes, err := hex.DecodeString(c.String("seed"))
-		if err != nil {
-			return err
-		}
-		seed := lapi.SealSeed{
-			Epoch: 101,
-			Value: seedBytes,
-		}
-		sectorSize, err := units.RAMInBytes(c.String("sector-size"))
-		if err != nil {
-			return err
-		}
-
-		// Get miner ID from address
-		minerID, err := address.IDFromAddress(minerAddr)
-		if err != nil {
-			return err
-		}
-
-		// Create a new sealer instance
-		sbfs := &basicfs.Provider{
-			Root: "/mnt/md0/tps", // 使用提供的扇区封装路径
-		}
-		sb, err := ffiwrapper.New(sbfs)
-		if err != nil {
-			return err
-		}
-
-		// Prepare sector metadata
-		sectorID := abi.SectorID{Miner: abi.ActorID(minerID), Number: sectorNum}
-		sid := storiface.SectorRef{
-			ID:        sectorID,
-			ProofType: spt(abi.SectorSize(sectorSize), false),
-		}
-
-		// Perform sealing operations
-		pi, err := sb.AddPiece(context.TODO(), sid, nil, abi.PaddedPieceSize(sectorSize).Unpadded(), rand.Reader)
-		if err != nil {
-			return xerrors.Errorf("add piece: %w", err)
-		}
-
-		log.Infof("[%d] Running replication...", sectorNum)
-
-		// Calculate CommD
-		commD, err := ffiwrapper.GenerateUnsealedCID(context.TODO(), sid.ProofType, sectorSize, ticket)
-		if err != nil {
-			return err
-		}
-
-		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, []abi.PieceInfo{pi}, commD)
-		if err != nil {
-			return xerrors.Errorf("commit: %w", err)
-		}
-		log.Infof("tk1=   ")
-		cids, err := sb.SealPreCommit2(context.TODO(), sid, pc1o)
-		if err != nil {
-			return xerrors.Errorf("commit: %w", err)
-		}
-
-		log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
-		c1o, err := sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, nil, cids, commD)
+		c1o, err := sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
 		if err != nil {
 			return err
 		}
