@@ -1273,7 +1273,7 @@ var seaCmd = &cli.Command{
 			return err
 		}
 
-		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, []byte("bf8069be9b4021b42ffab6dd634af51c049d5d7e135fc64eff4155dbc1f87e5f"), []abi.PieceInfo{pi})
+		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, []byte("000"), []abi.PieceInfo{pi})
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
