@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -1076,7 +1077,7 @@ var recCmd = &cli.Command{
 			return err
 		}
 		sectorNum := abi.SectorNumber(c.Int64("sector-num"))
-		ticketPreimage := []byte(c.String("ticket-preimage"))
+		ticketPreimage := c.String("ticket-preimage")
 		sealedCID, err := cid.Decode(c.String("sealed-cid"))
 		if err != nil {
 			return err
@@ -1115,10 +1116,18 @@ var recCmd = &cli.Command{
 		}
 
 		log.Infof("[%d] Running replication...", sectorNum)
-		//trand := blake2b.Sum256(ticketPreimage)
-		//ticket := ticketPreimage
-		ticket := abi.SealRandomness(ticketPreimage[:])
-		log.Infof("tikkkkkkkkkkkkkkkkkk       " + string(ticket))
+		// 解码十六进制字符串为字节切片
+		hashValue, err := hex.DecodeString(ticketPreimage)
+		if err != nil {
+			fmt.Println("解码失败:", err)
+			return nil
+		}
+
+		// 将字节切片赋值给 ticket 变量
+		ticket := abi.SealRandomness(hashValue)
+
+		// 打印结果
+		fmt.Printf("ticket: %v\n", ticket)
 		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, []abi.PieceInfo{pi})
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
