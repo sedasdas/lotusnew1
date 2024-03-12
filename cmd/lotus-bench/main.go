@@ -1272,8 +1272,12 @@ var seaCmd = &cli.Command{
 		if err != nil {
 			return err
 		}
-
-		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, []byte("000"), []abi.PieceInfo{pi})
+		randomness := make([]byte, abi.RandomnessLength)
+		_, err = rand.Read(randomness)
+		if err != nil {
+			return nil
+		}
+		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, randomness, []abi.PieceInfo{pi})
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
