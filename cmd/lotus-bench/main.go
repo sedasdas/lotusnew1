@@ -1272,7 +1272,8 @@ var seaCmd = &cli.Command{
 		if err != nil {
 			return err
 		}
-		randomness := []byte("jWRUDHCyC1HPzi3r5YXn+jKRnFn+HU7JvNrv9n9ilJE=")
+
+		randomness := []byte("111111111")
 		_, err = rand.Read(randomness)
 		if err != nil {
 			return nil
