@@ -1277,7 +1277,7 @@ var seaCmd = &cli.Command{
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
-		log.Infof("tk1=   ")
+		log.Infof("tk1=   " + string(ticket))
 		cids, err := sb.SealPreCommit2(context.TODO(), sid, pc1o)
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
