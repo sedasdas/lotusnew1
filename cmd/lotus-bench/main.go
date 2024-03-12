@@ -1116,8 +1116,8 @@ var recCmd = &cli.Command{
 
 		log.Infof("[%d] Running replication...", sectorNum)
 		//trand := blake2b.Sum256(ticketPreimage)
-		//ticket := ticketPreimage
-		ticket := abi.SealRandomness(ticketPreimage[:])
+		ticket := ticketPreimage
+		//ticket := abi.SealRandomness(ticketPreimage[:])
 		log.Infof("tikkkkkkkkkkkkkkkkkk       " + string(ticket))
 		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, []abi.PieceInfo{pi})
 		if err != nil {
