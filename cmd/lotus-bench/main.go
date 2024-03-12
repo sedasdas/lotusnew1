@@ -1267,7 +1267,7 @@ var seaCmd = &cli.Command{
 			return xerrors.Errorf("add piece: %w", err)
 		}
 
-		log.Infof("[%d] Running replincaltion...", sectorNum)
+		log.Infof("[%d] Running replinmcaltion...", sectorNum)
 
 		if err != nil {
 			return err
