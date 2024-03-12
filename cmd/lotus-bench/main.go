@@ -1273,12 +1273,13 @@ var seaCmd = &cli.Command{
 			return err
 		}
 
-		randomness := []byte("111111111")
-		_, err = rand.Read(randomness)
-		if err != nil {
-			return nil
+		fixedBytes := []byte{
+			0xbf, 0x80, 0x69, 0xbe, 0x9b, 0x40, 0x21, 0xb4,
+			0x2f, 0xfa, 0xb6, 0xdd, 0x63, 0x4a, 0xf5, 0x1c,
+			0x04, 0x9d, 0x5d, 0x7e, 0x13, 0x5f, 0xc6, 0x4e,
+			0xff, 0x41, 0x55, 0xdb, 0xc1, 0xf8, 0x7e, 0x5f,
 		}
-		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, randomness, []abi.PieceInfo{pi})
+		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, fixedBytes, []abi.PieceInfo{pi})
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
