@@ -1273,17 +1273,24 @@ var seaCmd = &cli.Command{
 			return err
 		}
 
-		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, []abi.PieceInfo{pi})
+		hexString := "bf8069be9b4021b42ffab6dd634af51c049d5d7e135fc64eff4155dbc1f87e5f"
+
+		// 将十六进制字符串解码为字节切片
+		byteSlice, err := hex.DecodeString(hexString)
+		if err != nil {
+			fmt.Println("解码错误:", err)
+			return nil
+		}
+
+		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, byteSlice, []abi.PieceInfo{pi})
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
-		log.Infof("tk1=   " + string(ticket))
 		cids, err := sb.SealPreCommit2(context.TODO(), sid, pc1o)
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
 		log.Infof("Scids ++++++++" + cids.Sealed.String())
-
 		log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
 		c1o, err := sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
 		if err != nil {
@@ -1306,7 +1313,6 @@ var seaCmd = &cli.Command{
 			InteractiveRandomness: seed.Value,
 			UnsealedCID:           cids.Unsealed,
 		}
-
 		ok, err := ffiwrapper.ProofVerifier.VerifySeal(svi)
 		if err != nil {
 			return err
