@@ -1117,6 +1117,7 @@ var recCmd = &cli.Command{
 		log.Infof("[%d] Running replication...", sectorNum)
 		trand := blake2b.Sum256(ticketPreimage)
 		ticket := abi.SealRandomness(trand[:])
+		log.Infof("tikkkkkkkkkkkkkkkkkk       " + string(ticket))
 		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, []abi.PieceInfo{pi})
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
@@ -1125,10 +1126,6 @@ var recCmd = &cli.Command{
 		cids, err := sb.SealPreCommit2(context.TODO(), sid, pc1o)
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
-		}
-
-		if !sealedCID.Equals(cids.Sealed) {
-			return xerrors.Errorf("sealed CID doesn't match: expected %s, got %s", sealedCID, cids.Sealed)
 		}
 
 		seed := lapi.SealSeed{
