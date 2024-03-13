@@ -1227,14 +1227,14 @@ var seaCmd = &cli.Command{
 		}
 		ticketHex, err := hex.DecodeString(ticketStr)
 		ticket := abi.SealRandomness(ticketHex[:])
-		//seedBytes, err := hex.DecodeString(c.String("seed"))
+		seedBytes, err := hex.DecodeString(c.String("seed"))
 		if err != nil {
 			return err
 		}
-		//seed := lapi.SealSeed{
-		//	Epoch: 101,
-		//	Value: seedBytes,
-		//}
+		seed := lapi.SealSeed{
+			Epoch: 101,
+			Value: seedBytes,
+		}
 		sectorSize, err := units.RAMInBytes(c.String("sector-size"))
 		if err != nil {
 			return err
@@ -1293,10 +1293,10 @@ var seaCmd = &cli.Command{
 		fmt.Printf("recovery  CIDcommD=%v \n", cids.Unsealed.String())
 		fmt.Printf("recovery  CIDcommR=%v \n", cids.Sealed.String())
 		//	log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
-		//	c1o, err := sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
-		//	if err != nil {
-		//		return err
-		//	}
+		_, err = sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
+		if err != nil {
+			return err
+		}
 		//
 		//	log.Infof("[%d] Generating PoRep for sector (2)", sectorNum)
 		//	proof, err := sb.SealCommit2(context.TODO(), sid, c1o)
