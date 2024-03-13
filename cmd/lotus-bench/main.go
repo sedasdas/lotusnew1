@@ -1263,7 +1263,8 @@ var seaCmd = &cli.Command{
 		}
 
 		// Perform sealing operations
-		pi, err := sb.AddPiece(context.TODO(), sid, nil, abi.PaddedPieceSize(sectorSize).Unpadded(), rand.Reader)
+		data, err := os.Open("/dev/zero")
+		pi, err := sb.AddPiece(context.TODO(), sid, nil, abi.PaddedPieceSize(sectorSize).Unpadded(), data)
 		if err != nil {
 			return xerrors.Errorf("add piece: %w", err)
 		}
@@ -1278,7 +1279,7 @@ var seaCmd = &cli.Command{
 		log.Infof("recovery preCommit1Cmd pieces=%v", pieces)
 		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, pieces)
 		if err != nil {
-			return xerrors.Errorf("commit: %w", err)
+			return xerrors.Errorf("pc1: %w", err)
 		}
 
 		log.Infof("recovery preCommit2Cmd sid=%v ", sid)
@@ -1286,7 +1287,7 @@ var seaCmd = &cli.Command{
 
 		cids, err := sb.SealPreCommit2(context.TODO(), sid, pc1o)
 		if err != nil {
-			return xerrors.Errorf("commit: %w", err)
+			return xerrors.Errorf("pc2: %w", err)
 		}
 		fmt.Printf("recovery  Ticket=%v \n", ticketStr)
 		fmt.Printf("recovery  CIDcommD=%v \n", cids.Unsealed.String())
