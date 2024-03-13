@@ -1267,7 +1267,7 @@ var seaCmd = &cli.Command{
 		if err != nil {
 			return xerrors.Errorf("add piece: %w", err)
 		}
-
+		pieces := []abi.PieceInfo{pi}
 		log.Infof("[%d] Running replin mcaltion...", sectorNum)
 
 		if err != nil {
@@ -1275,16 +1275,19 @@ var seaCmd = &cli.Command{
 		}
 		log.Infof("recovery preCommit1Cmd sid=%v", sid)
 		log.Infof("recovery preCommit1Cmd ticket=%v", ticketStr)
-		log.Infof("recovery preCommit1Cmd pieces=%v", pi)
-		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, []abi.PieceInfo{pi})
+		log.Infof("recovery preCommit1Cmd pieces=%v", pieces)
+		pc1o, err := sb.SealPreCommit1(context.TODO(), sid, ticket, pieces)
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
+
+		log.Infof("recovery preCommit2Cmd sid=%v ", sid)
+		log.Infof("recovery preCommit2Cmd pc1o=%v ", pc1o)
+
 		cids, err := sb.SealPreCommit2(context.TODO(), sid, pc1o)
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
-		log.Infof("Scids ++++++++" + cids.Sealed.String())
 		log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
 		c1o, err := sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
 		if err != nil {
