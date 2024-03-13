@@ -1288,6 +1288,9 @@ var seaCmd = &cli.Command{
 		if err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
+		fmt.Printf("recovery  Ticket=%v \n", ticketStr)
+		fmt.Printf("recovery  CIDcommD=%v \n", cids.Unsealed.String())
+		fmt.Printf("recovery  CIDcommR=%v \n", cids.Sealed.String())
 		log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
 		c1o, err := sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
 		if err != nil {
