@@ -1227,14 +1227,14 @@ var seaCmd = &cli.Command{
 		}
 		ticketHex, err := hex.DecodeString(ticketStr)
 		ticket := abi.SealRandomness(ticketHex[:])
-		seedBytes, err := hex.DecodeString(c.String("seed"))
+		//seedBytes, err := hex.DecodeString(c.String("seed"))
 		if err != nil {
 			return err
 		}
-		seed := lapi.SealSeed{
-			Epoch: 101,
-			Value: seedBytes,
-		}
+		//seed := lapi.SealSeed{
+		//	Epoch: 101,
+		//	Value: seedBytes,
+		//}
 		sectorSize, err := units.RAMInBytes(c.String("sector-size"))
 		if err != nil {
 			return err
@@ -1292,39 +1292,40 @@ var seaCmd = &cli.Command{
 		fmt.Printf("recovery  Ticket=%v \n", ticketStr)
 		fmt.Printf("recovery  CIDcommD=%v \n", cids.Unsealed.String())
 		fmt.Printf("recovery  CIDcommR=%v \n", cids.Sealed.String())
-		log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
-		c1o, err := sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
-		if err != nil {
-			return err
-		}
-
-		log.Infof("[%d] Generating PoRep for sector (2)", sectorNum)
-		proof, err := sb.SealCommit2(context.TODO(), sid, c1o)
-		if err != nil {
-			return err
-		}
-
-		svi := prooftypes.SealVerifyInfo{
-			SectorID:              sectorID,
-			SealedCID:             cids.Sealed,
-			SealProof:             sid.ProofType,
-			Proof:                 proof,
-			DealIDs:               nil,
-			Randomness:            ticket,
-			InteractiveRandomness: seed.Value,
-			UnsealedCID:           cids.Unsealed,
-		}
-		ok, err := ffiwrapper.ProofVerifier.VerifySeal(svi)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return xerrors.Errorf("porep proof for sector %d was invalid", sectorNum)
-		}
-
-		log.Infof("Sealed CID: %s", cids.Sealed)
-		log.Infof("Sealing operation completed successfully for sector %d", sectorNum)
+		//	log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
+		//	c1o, err := sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
+		//	if err != nil {
+		//		return err
+		//	}
+		//
+		//	log.Infof("[%d] Generating PoRep for sector (2)", sectorNum)
+		//	proof, err := sb.SealCommit2(context.TODO(), sid, c1o)
+		//	if err != nil {
+		//		return err
+		//	}
+		//
+		//	svi := prooftypes.SealVerifyInfo{
+		//		SectorID:              sectorID,
+		//		SealedCID:             cids.Sealed,
+		//		SealProof:             sid.ProofType,
+		//		Proof:                 proof,
+		//		DealIDs:               nil,
+		//		Randomness:            ticket,
+		//		InteractiveRandomness: seed.Value,
+		//		UnsealedCID:           cids.Unsealed,
+		//	}
+		//	ok, err := ffiwrapper.ProofVerifier.VerifySeal(svi)
+		//	if err != nil {
+		//		return err
+		//	}
+		//	if !ok {
+		//		return xerrors.Errorf("porep proof for sector %d was invalid", sectorNum)
+		//	}
+		//
+		//	log.Infof("Sealed CID: %s", cids.Sealed)
+		//	log.Infof("Sealing operation completed successfully for sector %d", sectorNum)
 		return nil
+
 	},
 }
 
