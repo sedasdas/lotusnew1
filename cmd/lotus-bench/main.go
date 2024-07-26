@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sync"
 	"time"
@@ -1358,8 +1357,8 @@ var seaCmd = &cli.Command{
 }
 
 func moveFile(src, dst string) error {
-	cmd := exec.Command("mv", src, dst)
-	err := cmd.Run()
+
+	err := os.Rename(src, dst)
 	if err != nil {
 		return fmt.Errorf("failed to move file %s to %s: %w", src, dst, err)
 	}
