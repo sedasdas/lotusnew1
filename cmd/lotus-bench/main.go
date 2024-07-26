@@ -1304,8 +1304,21 @@ var seaCmd = &cli.Command{
 		fmt.Printf(fileunsealed)
 		//_, err = sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
 		_ = sb.FinalizeSector(context.TODO(), sid)
-		exec.Command("mv", filesealed, "/mnt/10.0.2.57/mnt/disk22/rec/sealed/").Run()
-		exec.Command("mv", filecache, "/mnt/10.0.2.57/mnt/disk22/rec/cache/").Run()
+
+		sealedDest := "/mnt/10.0.2.57/mnt/disk22/rec/sealed/"
+		cacheDest := "/mnt/10.0.2.57/mnt/disk22/rec/cache/"
+
+		if err := moveFile(filesealed, sealedDest); err != nil {
+			fmt.Printf("Error moving filesealed: %v\n", err)
+		} else {
+			fmt.Println("Successfully moved filesealed")
+		}
+
+		if err := moveFile(filecache, cacheDest); err != nil {
+			fmt.Printf("Error moving filecache: %v\n", err)
+		} else {
+			fmt.Println("Successfully moved filecache")
+		}
 
 		// 运行 mv 命令
 		if err != nil {
@@ -1342,6 +1355,15 @@ var seaCmd = &cli.Command{
 		return nil
 
 	},
+}
+
+func moveFile(src, dst string) error {
+	cmd := exec.Command("mv", src, dst)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to move file %s to %s: %w", src, dst, err)
+	}
+	return nil
 }
 
 func bps(sectorSize abi.SectorSize, sectorNum int, d time.Duration) string {
