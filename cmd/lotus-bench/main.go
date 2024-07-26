@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -1357,46 +1356,22 @@ var seaCmd = &cli.Command{
 	},
 }
 
-func moveFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return fmt.Errorf("Couldn't open source file: %s", err)
+func moveFile(src, dstDir string) error {
+	// 确保目标目录存在
+	if err := os.MkdirAll(dstDir, 0755); err != nil {
+		return fmt.Errorf("无法创建目标目录: %v", err)
 	}
 
-	out, err := os.Create(dst)
-	if err != nil {
-		in.Close()
-		return fmt.Errorf("Couldn't open dest file: %s", err)
-	}
-	defer out.Close()
+	// 构建目标文件路径
+	dstPath := filepath.Join(dstDir, filepath.Base(src))
 
-	_, err = io.Copy(out, in)
-	in.Close()
-	if err != nil {
-		return fmt.Errorf("Writing to output file failed: %s", err)
+	// 移动文件
+	if err := os.Rename(src, dstPath); err != nil {
+		return fmt.Errorf("移动文件失败: %v", err)
 	}
 
-	err = out.Sync()
-	if err != nil {
-		return fmt.Errorf("Sync error: %s", err)
-	}
-
-	si, err := os.Stat(src)
-	if err != nil {
-		return fmt.Errorf("Stat error: %s", err)
-	}
-	err = os.Chmod(dst, si.Mode())
-	if err != nil {
-		return fmt.Errorf("Chmod error: %s", err)
-	}
-
-	err = os.Remove(src)
-	if err != nil {
-		return fmt.Errorf("Failed removing original file: %s", err)
-	}
 	return nil
 }
-
 func bps(sectorSize abi.SectorSize, sectorNum int, d time.Duration) string {
 	bdata := new(big.Int).SetUint64(uint64(sectorSize))
 	bdata = bdata.Mul(bdata, big.NewInt(int64(sectorNum)))
