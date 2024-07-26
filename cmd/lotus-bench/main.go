@@ -1378,32 +1378,43 @@ func copyFile(src, dst string) error {
 	return nil
 }
 
-func moveToNFS(src, dest string) error {
-	// 检查源路径是文件还是目录
+func moveToNFS(src, destBase string) error {
 	srcInfo, err := os.Stat(src)
 	if err != nil {
 		return fmt.Errorf("获取源路径信息失败: %v", err)
 	}
 
+	// 获取源路径的基本名称（文件名或文件夹名）
+	srcBase := filepath.Base(src)
+	// 在目标基础路径下创建与源同名的目标路径
+	dest := filepath.Join(destBase, srcBase)
+
 	if !srcInfo.IsDir() {
-		// 如果是文件，直接复制
-		if err := copyFile(src, filepath.Join(dest, filepath.Base(src))); err != nil {
+		// 如果是文件，直接复制到新的目标路径
+		if err := copyFile(src, dest); err != nil {
 			return err
 		}
 		return os.Remove(src)
 	}
 
-	// 如果是目录，遍历并复制所有内容
+	// 如果是目录，创建目标目录
+	if err := os.MkdirAll(dest, srcInfo.Mode()); err != nil {
+		return fmt.Errorf("创建目标目录失败: %v", err)
+	}
+
+	// 遍历并复制所有内容
 	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
+		// 获取相对于源目录的路径
 		relPath, err := filepath.Rel(src, path)
 		if err != nil {
 			return fmt.Errorf("获取相对路径失败: %v", err)
 		}
 
+		// 构建目标路径
 		dstPath := filepath.Join(dest, relPath)
 
 		if info.IsDir() {
