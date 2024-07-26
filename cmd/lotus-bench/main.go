@@ -1304,8 +1304,8 @@ var seaCmd = &cli.Command{
 		fmt.Printf(fileunsealed)
 		//_, err = sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
 		_ = sb.FinalizeSector(context.TODO(), sid)
-		exec.Command("mv", filesealed, "/mnt/10.0.2.57/disk22")
-		exec.Command("mv", filecache, "/mnt/10.0.2.57/disk22")
+		exec.Command("mv", filesealed, "/mnt/10.0.2.57/disk22/rec")
+		exec.Command("mv", filecache, "/mnt/10.0.2.57/disk22/rec")
 		if err != nil {
 			fmt.Printf(string(seed.Value))
 			return err
