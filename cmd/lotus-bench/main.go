@@ -1308,13 +1308,13 @@ var seaCmd = &cli.Command{
 		sealedDest := "/mnt/10.0.2.57/mnt/disk22/rec/sealed/"
 		cacheDest := "/mnt/10.0.2.57/mnt/disk22/rec/cache/"
 
-		if err := moveFile(filesealed, sealedDest); err != nil {
+		if err := moveToNFS(filesealed, sealedDest); err != nil {
 			fmt.Printf("Error moving filesealed: %v\n", err)
 		} else {
 			fmt.Println("Successfully moved filesealed")
 		}
 
-		if err := moveFile(filecache, cacheDest); err != nil {
+		if err := moveToNFS(filecache, cacheDest); err != nil {
 			fmt.Printf("Error moving filecache: %v\n", err)
 		} else {
 			fmt.Println("Successfully moved filecache")
@@ -1357,46 +1357,67 @@ var seaCmd = &cli.Command{
 	},
 }
 
-func moveFile(src, dstDir string) error {
-	// 确保目标目录存在
-	if err := os.MkdirAll(dstDir, 0755); err != nil {
-		return fmt.Errorf("无法创建目标目录: %v", err)
-	}
-
-	// 构建目标文件路径
-	dstPath := filepath.Join(dstDir, filepath.Base(src))
-
-	// 打开源文件
+func copyFile(src, dst string) error {
 	srcFile, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("无法打开源文件: %v", err)
 	}
 	defer srcFile.Close()
 
-	// 创建目标文件
-	dstFile, err := os.Create(dstPath)
+	dstFile, err := os.Create(dst)
 	if err != nil {
 		return fmt.Errorf("无法创建目标文件: %v", err)
 	}
 	defer dstFile.Close()
 
-	// 复制文件内容
 	_, err = io.Copy(dstFile, srcFile)
 	if err != nil {
 		return fmt.Errorf("复制文件内容失败: %v", err)
 	}
 
-	// 关闭文件以确保所有数据都被写入
-	srcFile.Close()
-	dstFile.Close()
-
-	// 删除源文件
-	if err := os.Remove(src); err != nil {
-		return fmt.Errorf("删除源文件失败: %v", err)
-	}
-
 	return nil
 }
+
+func moveToNFS(src, dest string) error {
+	// 检查源路径是文件还是目录
+	srcInfo, err := os.Stat(src)
+	if err != nil {
+		return fmt.Errorf("获取源路径信息失败: %v", err)
+	}
+
+	if !srcInfo.IsDir() {
+		// 如果是文件，直接复制
+		if err := copyFile(src, filepath.Join(dest, filepath.Base(src))); err != nil {
+			return err
+		}
+		return os.Remove(src)
+	}
+
+	// 如果是目录，遍历并复制所有内容
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return fmt.Errorf("获取相对路径失败: %v", err)
+		}
+
+		dstPath := filepath.Join(dest, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode())
+		}
+
+		if err := copyFile(path, dstPath); err != nil {
+			return err
+		}
+
+		return os.Remove(path)
+	})
+}
+
 func bps(sectorSize abi.SectorSize, sectorNum int, d time.Duration) string {
 	bdata := new(big.Int).SetUint64(uint64(sectorSize))
 	bdata = bdata.Mul(bdata, big.NewInt(int64(sectorNum)))
