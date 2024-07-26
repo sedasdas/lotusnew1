@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sync"
 	"time"
@@ -1293,8 +1294,20 @@ var seaCmd = &cli.Command{
 		fmt.Printf("recovery  CIDcommD=%v \n", cids.Unsealed.String())
 		fmt.Printf("recovery  CIDcommR=%v \n", cids.Sealed.String())
 		//	log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
-		_, err = sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
+		fileunsealed := fmt.Sprintf("/mnt/md0/tps/unsealed/s-%s-%s", "t042558", sectorNum)
+		filesealed := fmt.Sprintf("/mnt/md0/tps/sealed/s-%s-%s", "t042558", sectorNum)
+		filecache := fmt.Sprintf("/mnt/md0/tps/cache/s-%s-%s", "t042558", sectorNum)
+		//var fileunsealed = "/mnt/md0/tps" + "/unsealed/" + "s-" + minerAddr.String() + sectorNum
+		if err := os.RemoveAll(fileunsealed); err != nil {
+			return xerrors.Errorf("remove existing sector cache from %s (sector %d): %w", fileunsealed, err)
+		}
+		fmt.Printf(fileunsealed)
+		//_, err = sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
+		_ = sb.FinalizeSector(context.TODO(), sid)
+		exec.Command("mv", filesealed, "/mnt/10.0.2.57/disk22")
+		exec.Command("mv", filecache, "/mnt/10.0.2.57/disk22")
 		if err != nil {
+			fmt.Printf(string(seed.Value))
 			return err
 		}
 		//
