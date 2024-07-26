@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -1365,9 +1366,33 @@ func moveFile(src, dstDir string) error {
 	// 构建目标文件路径
 	dstPath := filepath.Join(dstDir, filepath.Base(src))
 
-	// 移动文件
-	if err := os.Rename(src, dstPath); err != nil {
-		return fmt.Errorf("移动文件失败: %v", err)
+	// 打开源文件
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("无法打开源文件: %v", err)
+	}
+	defer srcFile.Close()
+
+	// 创建目标文件
+	dstFile, err := os.Create(dstPath)
+	if err != nil {
+		return fmt.Errorf("无法创建目标文件: %v", err)
+	}
+	defer dstFile.Close()
+
+	// 复制文件内容
+	_, err = io.Copy(dstFile, srcFile)
+	if err != nil {
+		return fmt.Errorf("复制文件内容失败: %v", err)
+	}
+
+	// 关闭文件以确保所有数据都被写入
+	srcFile.Close()
+	dstFile.Close()
+
+	// 删除源文件
+	if err := os.Remove(src); err != nil {
+		return fmt.Errorf("删除源文件失败: %v", err)
 	}
 
 	return nil
