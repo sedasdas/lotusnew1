@@ -1295,8 +1295,8 @@ var seaCmd = &cli.Command{
 		fmt.Printf("recovery  CIDcommR=%v \n", cids.Sealed.String())
 		//	log.Infof("[%d] Generating PoRep for sector (1)", sectorNum)
 		fileunsealed := fmt.Sprintf("/mnt/md0/tps/unsealed/s-%s-%s", "t042558", sectorNum)
-		filesealed := fmt.Sprintf("/mnt/md0/tps/sealed/s-%s-%s", "t042558", sectorNum)
-		filecache := fmt.Sprintf("/mnt/md0/tps/cache/s-%s-%s", "t042558", sectorNum)
+		//filesealed := fmt.Sprintf("/mnt/md0/tps/sealed/s-%s-%s", "t042558", sectorNum)
+		//filecache := fmt.Sprintf("/mnt/md0/tps/cache/s-%s-%s", "t042558", sectorNum)
 		//var fileunsealed = "/mnt/md0/tps" + "/unsealed/" + "s-" + minerAddr.String() + sectorNum
 		if err := os.RemoveAll(fileunsealed); err != nil {
 			return xerrors.Errorf("remove existing sector cache from %s (sector %d): %w", fileunsealed, err)
@@ -1304,27 +1304,31 @@ var seaCmd = &cli.Command{
 		fmt.Printf(fileunsealed)
 		//_, err = sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
 		_ = sb.FinalizeSector(context.TODO(), sid)
+		//复制文件到nfs
+		/*		sealedDest := "/mnt/10.0.2.57/mnt/disk22/rec/sealed/"
+				cacheDest := "/mnt/10.0.2.57/mnt/disk22/rec/cache/"
 
-		sealedDest := "/mnt/10.0.2.57/mnt/disk22/rec/sealed/"
-		cacheDest := "/mnt/10.0.2.57/mnt/disk22/rec/cache/"
+				if err := moveToNFS(filesealed, sealedDest); err != nil {
+					fmt.Printf("Error moving filesealed: %v\n", err)
+				} else {
+					fmt.Println("Successfully moved filesealed")
+				}
 
-		if err := moveToNFS(filesealed, sealedDest); err != nil {
-			fmt.Printf("Error moving filesealed: %v\n", err)
-		} else {
-			fmt.Println("Successfully moved filesealed")
-		}
+				if err := moveToNFS(filecache, cacheDest); err != nil {
+					fmt.Printf("Error moving filecache: %v\n", err)
+				} else {
+					fmt.Println("Successfully moved filecache")
+				}s
 
-		if err := moveToNFS(filecache, cacheDest); err != nil {
-			fmt.Printf("Error moving filecache: %v\n", err)
-		} else {
-			fmt.Println("Successfully moved filecache")
-		}
+				// 运行 mv 命令
 
-		// 运行 mv 命令
+		*/
+
 		if err != nil {
 			fmt.Printf(string(seed.Value))
 			return err
 		}
+
 		//
 		//	log.Infof("[%d] Generating PoRep for sector (2)", sectorNum)
 		//	proof, err := sb.SealCommit2(context.TODO(), sid, c1o)
