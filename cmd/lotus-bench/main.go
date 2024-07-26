@@ -1304,8 +1304,9 @@ var seaCmd = &cli.Command{
 		fmt.Printf(fileunsealed)
 		//_, err = sb.SealCommit1(context.TODO(), sid, ticket, seed.Value, []abi.PieceInfo{pi}, cids)
 		_ = sb.FinalizeSector(context.TODO(), sid)
-		exec.Command("mv", filesealed, "/mnt/10.0.2.57/mnt/disk22/rec/sealed").Run()
-		exec.Command("mv", filecache, "/mnt/10.0.2.57/mnt/disk22/rec/cache").Run()
+		exec.Command("mv", filesealed, "/mnt/10.0.2.57/mnt/disk22/rec/sealed/").Run()
+		exec.Command("mv", filecache, "/mnt/10.0.2.57/mnt/disk22/rec/cache/").Run()
+
 		// 运行 mv 命令
 		if err != nil {
 			fmt.Printf(string(seed.Value))
